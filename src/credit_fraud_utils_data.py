@@ -43,8 +43,8 @@ def preprocess_data(
 
     # Keep original column names to re-apply them later
     X_columns = X.columns
-
-    scaler = StandardScaler()
+    #TODO : add more preprocessing steps if needed
+    scaler = StandardScaler()   
     X_scaled = scaler.fit_transform(X)
 
     if sampling_method and sampling_strategy is not None:

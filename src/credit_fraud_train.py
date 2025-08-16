@@ -8,7 +8,7 @@ def train_model(args):
     Main training function.
     TODO:
     1. Load data (train, val) using load_data()
-    2. Preprocess data (scaling, sampling)
+    2. Preprocess data (scaling, sampling) [y] 
     3. Train Logistic Regression and Random Forest
     4. Evaluate models → get metrics
     5. Select best models for Voting Classifier
@@ -18,7 +18,7 @@ def train_model(args):
     """
     df= load_data(args.data_path)
     X , y =preprocess_data(df,args.sampling_strategy, args.sampling_method)
-    
+     
     pass 
 
 
