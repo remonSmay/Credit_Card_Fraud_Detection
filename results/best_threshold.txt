@@ -1,0 +1,2 @@
+Best threshold: 0.46
+Best F1 score: 0.8176795580110497
