@@ -38,8 +38,8 @@ def preprocess_data(
     Raises:
         ValueError: If an unknown sampling_method is provided.
     """
-    X = df.drop('Class', axis=1)
-    y = df['Class']
+    X = df.drop('Class', axis=1) # features
+    y = df['Class'] # traget variable
 
     # Keep original column names to re-apply them later
     X_columns = X.columns
