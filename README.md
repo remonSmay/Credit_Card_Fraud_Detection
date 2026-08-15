@@ -1,228 +1,245 @@
 # Credit Card Fraud Detection
 
-A comprehensive machine learning project for detecting fraudulent credit card transactions using ensemble methods and advanced preprocessing techniques.
+A machine learning project for detecting fraudulent credit card transactions from anonymized transaction features. The project includes exploratory analysis, preprocessing utilities, model training, threshold tuning, saved model artifacts, and validation metrics suitable for highly imbalanced fraud data.
 
-## 📊 Project Overview
+## Overview
 
-This project implements a robust credit card fraud detection system using multiple machine learning algorithms combined in a voting classifier. The system achieves high performance with an F1-score of **0.817** and PR-AUC of **0.805** on the validation set.
+Credit card fraud detection is an imbalanced binary classification problem: most transactions are legitimate, while fraud cases are rare and costly to miss. This project trains a soft-voting ensemble on the standard credit card fraud feature format:
 
-## 🎯 Key Features
+- `Time`
+- PCA-anonymized features `V1` through `V28`
+- `Amount`
+- Target label `Class`, where `0` means legitimate and `1` means fraud
 
-- **Ensemble Learning**: Combines Logistic Regression, Random Forest, and Neural Network (MLP) classifiers
-- **Advanced Preprocessing**: Implements SMOTE and undersampling techniques for handling imbalanced data
-- **Optimal Threshold Tuning**: Automatically finds the best classification threshold for maximum F1-score
-- **Comprehensive Evaluation**: Uses F1-score and PR-AUC metrics suitable for imbalanced datasets
-- **Modular Architecture**: Clean, maintainable code structure with separate modules for data processing, training, and evaluation
+The current training pipeline combines:
 
-## 📁 Project Structure
+- Logistic Regression with balanced class weights
+- Random Forest with balanced class weights
+- Multi-Layer Perceptron classifier
+- Optional resampling with SMOTE or random undersampling
+- Threshold search to maximize validation F1-score
+- PR-AUC evaluation for imbalanced classification
 
-```
+## Repository Structure
+
+```text
 Credit_Card_Fraud_Detection/
-├── data/                          # Dataset files
-│   ├── train.csv                  # Training data
-│   ├── val.csv                    # Validation data
-│   ├── test.csv                   # Test data
-│   └── trainval.csv               # Combined train+validation data
-├── src/                           # Source code
-│   ├── credit_fraud_train.py      # Main training script
-│   ├── credit_fraud_utils_data.py # Data preprocessing utilities
-│   ├── credit_fraud_utils_eval.py # Evaluation utilities
-│   └── __init__.py
-├── models/                        # Trained models
-│   └── fraud_model.pkl            # Saved ensemble model
-├── results/                       # Results and metrics
-│   ├── evaluation_results.json    # Model performance metrics
-│   └── best_threshold.txt         # Optimal classification threshold
-├── notebooks/                     # Jupyter notebooks
-│   └── Credit_Card_eda.ipynb      # Exploratory data analysis
-├── reports/                       # Generated reports
-├── requirements.txt               # Python dependencies
-└── README.md                      # This file
+|-- data/
+|   |-- train.csv
+|   |-- val.csv
+|   |-- test.csv
+|   `-- trainval.csv
+|-- models/
+|   `-- fraud_model.pkl
+|-- notebooks/
+|   `-- Credit_Card_eda.ipynb
+|-- results/
+|   |-- best_threshold.txt
+|   `-- evaluation_results.json
+|-- src/
+|   |-- __init__.py
+|   |-- config.json
+|   |-- credit_fraud_train.py
+|   |-- credit_fraud_utils_data.py
+|   `-- credit_fraud_utils_eval.py
+|-- LICENSE
+|-- README.md
+`-- requirements.txt
 ```
 
-## 🚀 Quick Start
+## Dataset Summary
 
-### Prerequisites
+The included CSV files follow the same schema and contain 31 columns: 30 input features plus the target label.
 
-- Python 3.8+
-- Required packages (see `requirements.txt`)
+| File | Rows | Legitimate | Fraud |
+| --- | ---: | ---: | ---: |
+| `data/train.csv` | 170,884 | 170,579 | 305 |
+| `data/val.csv` | 56,960 | 56,870 | 90 |
+| `data/test.csv` | 56,960 | 56,863 | 97 |
+| `data/trainval.csv` | 56,960 | 56,870 | 90 |
 
-### Installation
+The class imbalance is severe, so accuracy alone is not a reliable metric. The project focuses on F1-score and PR-AUC.
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd Credit_Card_Fraud_Detection
-   ```
+## Installation
 
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the training script:**
-   ```bash
-   python src/credit_fraud_train.py
-   ```
-
-### Training with Custom Parameters
+Create and activate a virtual environment, then install the required packages:
 
 ```bash
-python src/credit_fraud_train.py \
-    --train_path data/train.csv \
-    --val_path data/val.csv \
-    --model_path models/fraud_model.pkl \
-    --results_path results/evaluation_results.json \
-    --threshold_path results/best_threshold.txt \
-    --sampling smote \
-    --n_estimators 100 \
-    --max_depth 10
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-## 🔧 Model Architecture
+Requirements include:
 
-### Ensemble Classifier
-The system uses a **Voting Classifier** that combines three base models:
+- pandas
+- numpy
+- matplotlib
+- seaborn
+- scikit-learn
+- scipy
+- imbalanced-learn
 
-1. **Logistic Regression**
-   - Balanced class weights
-   - L1 regularization (liblinear solver)
-   - Maximum 1000 iterations
+## Training
 
-2. **Random Forest**
-   - 100 estimators (configurable)
-   - Maximum depth of 10 (configurable)
-   - Balanced class weights
+The main training entrypoint is:
 
-3. **Multi-Layer Perceptron (MLP)**
-   - Hidden layers: (16, 32)
-   - Adam optimizer
-   - Early stopping with validation fraction 0.1
+```bash
+src/credit_fraud_train.py
+```
 
-### Data Preprocessing
-- **Feature Scaling**: StandardScaler for all features
-- **Sampling Techniques**: 
-  - SMOTE for oversampling
-  - Random undersampling
-  - No sampling option available
-- **Validation**: No sampling applied to validation data
+The current script reads `config.json` from the current working directory. A configuration file is provided at `src/config.json`, so run from the project root with:
 
-## 📈 Performance Results
+```bash
+cp src/config.json config.json
+python src/credit_fraud_train.py
+```
 
-### Model Performance Metrics
-- **F1-Score**: 0.817 (with optimal threshold)
-- **PR-AUC**: 0.805
-- **Optimal Threshold**: 0.46
+The provided configuration trains three Random Forest variants inside the voting ensemble:
 
-### Threshold Optimization
-The system automatically finds the optimal classification threshold by:
-- Testing thresholds from 0.0 to 1.0 in 0.01 increments
-- Selecting the threshold that maximizes F1-score
-- Saving the optimal threshold for inference
+```json
+{
+  "train_path": "data/train.csv",
+  "val_path": "data/val.csv",
+  "results_dir": "results/experiments",
+  "sampling": "smote",
+  "hyperparameters": [
+    {"n_estimators": 100, "max_depth": 5},
+    {"n_estimators": 200, "max_depth": 10},
+    {"n_estimators": 300, "max_depth": 15}
+  ]
+}
+```
 
-## 🛠️ Usage
+Each experiment saves:
 
-### Training
+- Metrics JSON under `results/experiments/`
+- A pickled model artifact under `models/`
+
+## Pipeline Details
+
+### Data Loading
+
+`src/credit_fraud_utils_data.py` loads CSV files with pandas and expects a `Class` column in every supervised dataset.
+
+### Preprocessing
+
+The preprocessing function:
+
+1. Splits features from the `Class` label.
+2. Applies `StandardScaler` to all feature columns.
+3. Optionally applies a sampling strategy on the training set.
+
+Supported sampling modes:
+
+- `smote`
+- `undersampling`
+- no sampling, by leaving the sampling method empty
+
+Validation data is scaled but not resampled.
+
+### Model
+
+`src/credit_fraud_train.py` trains three estimators:
+
+- `LogisticRegression(max_iter=1000, class_weight="balanced", solver="liblinear")`
+- `RandomForestClassifier(class_weight="balanced")`
+- `MLPClassifier(hidden_layer_sizes=(16, 32), early_stopping=True)`
+
+These are combined with:
+
 ```python
-from src.credit_fraud_train import train_model
-import argparse
-
-# Set up arguments
-args = argparse.Namespace(
-    train_path='data/train.csv',
-    val_path='data/val.csv',
-    model_path='models/fraud_model.pkl',
-    results_path='results/evaluation_results.json',
-    threshold_path='results/best_threshold.txt',
-    sampling='smote',
-    n_estimators=100,
-    max_depth=10
-)
-
-# Train the model
-train_model(args)
+VotingClassifier(voting="soft")
 ```
 
-### Inference
+Soft voting uses predicted probabilities from the base models, which also enables threshold tuning.
+
+### Evaluation
+
+`src/credit_fraud_utils_eval.py` computes:
+
+- F1-score
+- PR-AUC through `average_precision_score`
+- Best threshold by scanning thresholds from `0.00` to `0.99`
+
+## Current Results
+
+The checked-in validation results are:
+
+| Metric | Value |
+| --- | ---: |
+| F1-score at default model threshold | 0.8045 |
+| PR-AUC | 0.8050 |
+| Best threshold | 0.46 |
+| Best F1-score | 0.8177 |
+
+These values come from:
+
+- `results/evaluation_results.json`
+- `results/best_threshold.txt`
+
+## Inference Example
+
+The existing `models/fraud_model.pkl` artifact contains a dictionary with:
+
+- `model`
+- `scaler`
+- `threshold`
+
+Example usage:
+
 ```python
 import pickle
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 
-# Load the trained model
-with open('models/fraud_model.pkl', 'rb') as f:
-    model_data = pickle.load(f)
+with open("models/fraud_model.pkl", "rb") as file:
+    artifact = pickle.load(file)
 
-model = model_data['model']
-scaler = model_data['scaler']
-threshold = model_data['threshold']
+model = artifact["model"]
+scaler = artifact["scaler"]
+threshold = artifact["threshold"]
 
-# Preprocess new data
-def predict_fraud(new_data):
-    # Scale features
-    X_scaled = scaler.transform(new_data)
-    
-    # Get probabilities
-    probabilities = model.predict_proba(X_scaled)[:, 1]
-    
-    # Apply optimal threshold
-    predictions = (probabilities >= threshold).astype(int)
-    
-    return predictions, probabilities
+new_transactions = pd.read_csv("data/test.csv").drop(columns=["Class"])
+new_transactions_scaled = scaler.transform(new_transactions)
+
+fraud_probability = model.predict_proba(new_transactions_scaled)[:, 1]
+fraud_prediction = (fraud_probability >= threshold).astype(int)
 ```
 
-## 📊 Data Analysis
+Note: newly generated experiment models from the current training script save `model` and `threshold`. If you need production-ready inference from newly trained artifacts, persist the fitted scaler alongside the model as well.
 
-The project includes a comprehensive Jupyter notebook (`notebooks/Credit_Card_eda.ipynb`) for:
-- Exploratory data analysis
-- Feature distribution analysis
-- Class imbalance visualization
-- Correlation analysis
-- Data quality assessment
+## Exploratory Data Analysis
 
-## 🔍 Configuration Options
+The notebook `notebooks/Credit_Card_eda.ipynb` contains analysis for:
 
-### Sampling Strategies
-- `none`: No sampling (original data)
-- `smote`: SMOTE oversampling
-- `undersampling`: Random undersampling
+- Dataset shape and column inspection
+- Class imbalance
+- Feature distributions
+- Correlations
+- Fraud vs legitimate transaction patterns
 
-### Model Parameters
-- `n_estimators`: Number of trees in Random Forest (default: 100)
-- `max_depth`: Maximum depth of trees (default: 10)
-- `sampling`: Sampling strategy for training data
+## Outputs
 
-## 📝 Output Files
+Existing outputs:
 
-### Model Files
-- `models/fraud_model.pkl`: Serialized ensemble model with scaler and threshold
+- `models/fraud_model.pkl`: saved model artifact
+- `results/evaluation_results.json`: validation F1-score and PR-AUC
+- `results/best_threshold.txt`: tuned threshold and best F1-score
 
-### Results Files
-- `results/evaluation_results.json`: Model performance metrics
-- `results/best_threshold.txt`: Optimal classification threshold
+Training outputs from the current pipeline:
 
-## 🤝 Contributing
+- `results/experiments/experiment_<n>.json`
+- `models/fraud_model_exp_<n>.pkl`
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Important Notes
 
-## 📄 License
+- The dataset is extremely imbalanced; use F1-score, recall, precision, and PR-AUC rather than accuracy alone.
+- The validation and test sets must not be resampled.
+- Threshold tuning should be done on validation data only.
+- The current training script expects `config.json` in the current working directory.
+- For reproducible inference, save the scaler used during training with every model artifact.
+- This project is for educational and research purposes. A production fraud system would also need monitoring, drift detection, model governance, privacy controls, and compliance review.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## License
 
-## 🙏 Acknowledgments
-
-- Dataset: Credit Card Fraud Detection dataset
-- Libraries: scikit-learn, pandas, numpy, imbalanced-learn
-- Techniques: SMOTE, ensemble methods, threshold optimization
-
-## 📞 Contact
-
-For questions or support, please open an issue in the repository.
-
----
-
-**Note**: This project is designed for educational and research purposes. Always ensure compliance with relevant regulations when implementing fraud detection systems in production environments.
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
